@@ -18,8 +18,7 @@ with mcp_client:
     print(f"Available tools: {[tool.tool_name for tool in tools]}")
     
     bedrock_model = BedrockModel(
-        model_id="us.amazon.nova-pro-v1:0",
-        max_tokens=10000
+        model_id="us.amazon.nova-premier-v1:0"
     )
     
     SYSTEM_PROMPT = """
@@ -66,7 +65,7 @@ with mcp_client:
             {
                 "task_id": "deep_analysis",
                 "description": "Execute deep analysis using think tool",
-                "system_prompt": "Use think tool to analyze TICKIT data quality issues from business and technical perspectives. Provide precise code-level fixes in English.",
+                "system_prompt": "Use think tool to analyze TICKIT data quality issues from business and technical perspectives. Provide precise dbt model SQL-code-level fixes in English.",
                 "priority": 4
             },
             {
@@ -152,3 +151,5 @@ with mcp_client:
     
     print(f"\n=== TICKIT数据质量检测报告 (中文版本)  ===")
     print(chinese_report)
+    
+    tools.clear
