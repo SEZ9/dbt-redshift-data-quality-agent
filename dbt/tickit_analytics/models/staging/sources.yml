@@ -1,0 +1,62 @@
+version: 2
+
+sources:
+  - name: tickit
+    description: TICKIT sample database from Amazon Redshift
+    schema: tickit  # 确保这个 schema 存在
+    tables:
+      - name: users
+        description: User information
+        columns:
+          - name: userid
+            description: Primary key for users
+            tests:
+              - unique
+              - not_null
+          - name: email
+            tests:
+              - not_null
+      
+      - name: sales
+        description: Sales transactions
+        columns:
+          - name: salesid
+            description: Primary key for sales
+            tests:
+              - unique
+              - not_null
+          - name: pricepaid
+            tests:
+              - not_null
+      
+      - name: event
+        description: Event information
+        columns:
+          - name: eventid
+            tests:
+              - unique
+              - not_null
+      
+      - name: venue
+        description: Venue information
+        columns:
+          - name: venueid
+            tests:
+              - unique
+              - not_null
+      
+      - name: category
+        description: Event categories
+        columns:
+          - name: catid
+            tests:
+              - unique
+              - not_null
+      
+      - name: date
+        description: Date dimension
+        columns:
+          - name: dateid
+            tests:
+              - unique
+              - not_null

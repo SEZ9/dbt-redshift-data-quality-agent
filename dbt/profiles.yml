@@ -1,0 +1,26 @@
+redshift_profile:
+  outputs:
+    dev:
+      autocommit: true
+      dbname: dev
+      host: redshift
+      password: redshift
+      port: 5439
+      schema: public
+      sslmode: prefer
+      threads: 4
+      type: redshift
+      user: awsuser
+  target: dev
+tickit_analytics:
+  outputs:
+    dev:
+      dbname: sample_data_dev
+      host: redshift
+      password: redshift
+      port: 5439
+      schema: tickit
+      threads: 4
+      type: redshift
+      user: awsuser
+  target: dev

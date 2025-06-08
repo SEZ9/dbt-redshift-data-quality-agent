@@ -1,0 +1,41 @@
+version: 2
+
+unit_tests:
+  - name: test_commission_calculation
+    description: "Test that commission calculation is correct (should be 15%)"
+    model: stg_sales
+    given:
+      - input: source('tickit', 'sales')
+        rows:
+          - {salesid: 1, pricepaid: 100.00, commission: 15.00, qtysold: 2, listid: 1, sellerid: 1, buyerid: 1, eventid: 1, dateid: 1, saletime: '2008-01-01 10:00:00'}
+          - {salesid: 2, pricepaid: 200.00, commission: 30.00, qtysold: 1, listid: 2, sellerid: 2, buyerid: 2, eventid: 2, dateid: 2, saletime: '2008-01-02 11:00:00'}
+    expect:
+      rows:
+        - {salesid: 1, pricepaid: 100.00, calculated_commission: 15.00}  # 这里会失败，因为代码计算的是20%
+        - {salesid: 2, pricepaid: 200.00, calculated_commission: 30.00}  # 这里会失败，因为代码计算的是40%
+
+  - name: test_full_name_formatting
+    description: "Test that full name has proper spacing"
+    model: stg_users
+    given:
+      - input: source('tickit', 'users')
+        rows:
+          - {userid: 1, username: 'USER1', firstname: 'John', lastname: 'Doe', city: 'Seattle', state: 'WA', email: 'john@example.com', phone: '123-456-7890', likesports: 't', liketheatre: 'f'}
+          - {userid: 2, username: 'USER2', firstname: 'Jane', lastname: 'Smith', city: 'Portland', state: 'OR', email: 'jane@example.com', phone: '098-765-4321', likesports: 'f', liketheatre: 't'}
+    expect:
+      rows:
+        - {userid: 1, full_name: 'John Doe'}  # 这里会失败，因为代码缺少空格
+        - {userid: 2, full_name: 'Jane Smith'}  # 这里会失败，因为代码缺少空格
+
+  - name: test_event_hour_extraction
+    description: "Test that event hour is correctly extracted from starttime"
+    model: stg_events
+    given:
+      - input: source('tickit', 'event')
+        rows:
+          - {eventid: 1, venueid: 1, catid: 1, dateid: 1, eventname: 'Concert A', starttime: '2008-01-01 19:30:00'}
+          - {eventid: 2, venueid: 2, catid: 2, dateid: 2, eventname: 'Show B', starttime: '2008-01-02 14:15:00'}
+    expect:
+      rows:
+        - {eventid: 1, event_hour: 19}  # 这里会失败，因为代码提取的是分钟(30)
+        - {eventid: 2, event_hour: 14}  # 这里会失败，因为代码提取的是分钟(15)

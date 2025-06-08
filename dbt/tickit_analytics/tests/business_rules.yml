@@ -1,0 +1,20 @@
+version: 2
+
+models:
+  - name: fact_sales
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "commission <= price_paid * 0.15"  # 修改：pricepaid -> price_paid
+          config:
+            severity: error
+      - dbt_utils.expression_is_true:
+          expression: "price_per_ticket > 0 OR price_per_ticket IS NULL"
+          config:
+            severity: warn
+
+  - name: user_analytics
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "avg_spent_per_purchase = total_spent / total_purchases"
+          config:
+            severity: error

@@ -1,0 +1,41 @@
+version: 2
+
+unit_tests:
+  - name: test_price_per_ticket_calculation
+    description: "Test price per ticket calculation handles division correctly"
+    model: fact_sales
+    given:
+      - input: ref('stg_sales')
+        rows:
+          - {salesid: 1, sellerid: 1, buyerid: 1, eventid: 1, qtysold: 2, pricepaid: 100.00, commission: 15.00, calculated_commission: 20.00}
+          - {salesid: 2, sellerid: 2, buyerid: 2, eventid: 2, qtysold: 0, pricepaid: 50.00, commission: 7.50, calculated_commission: 10.00}
+      - input: ref('stg_events')
+        rows:
+          - {eventid: 1, eventname: 'Concert A'}
+          - {eventid: 2, eventname: 'Show B'}
+      - input: ref('stg_users')
+        rows:
+          - {userid: 1, full_name: 'John Doe'}
+          - {userid: 2, full_name: 'Jane Smith'}
+    expect:
+      rows:
+        - {sale_id: 1, price_per_ticket: 50.00, net_revenue: 85.00}
+        - {sale_id: 2, price_per_ticket: null, net_revenue: 42.50}
+
+  - name: test_user_analytics_calculation
+    description: "Test user analytics calculations are correct"
+    model: user_analytics
+    given:
+      - input: ref('stg_users')
+        rows:
+          - {userid: 1, full_name: 'John Doe', city: 'Seattle', state: 'WA'}
+          - {userid: 2, full_name: 'Jane Smith', city: 'Portland', state: 'OR'}
+      - input: ref('stg_sales')
+        rows:
+          - {salesid: 1, buyerid: 1, pricepaid: 100.00, qtysold: 2, saletime: '2008-01-01 10:00:00'}
+          - {salesid: 2, buyerid: 1, pricepaid: 200.00, qtysold: 1, saletime: '2008-01-02 11:00:00'}
+          - {salesid: 3, buyerid: 2, pricepaid: 150.00, qtysold: 3, saletime: '2008-01-03 12:00:00'}
+    expect:
+      rows:
+        - {user_id: 1, total_purchases: 2, total_spent: 300.00, avg_spent_per_purchase: 150.00}
+        - {user_id: 2, total_purchases: 1, total_spent: 150.00, avg_spent_per_purchase: 150.00}

@@ -1,0 +1,154 @@
+from mcp import stdio_client, StdioServerParameters
+from strands.tools.mcp import MCPClient
+from strands import Agent
+from strands.models import BedrockModel
+from strands_tools import workflow, think
+
+mcp_client = MCPClient(lambda: stdio_client(
+    StdioServerParameters(
+        command="/dbt-mcp/.venv/bin/dbt-mcp",
+        args=[],
+        env={}
+    )
+))
+
+with mcp_client:
+    tools = mcp_client.list_tools_sync()
+    
+    print(f"Available tools: {[tool.tool_name for tool in tools]}")
+    
+    bedrock_model = BedrockModel(
+        model_id="us.amazon.nova-pro-v1:0",
+        max_tokens=10000
+    )
+    
+    SYSTEM_PROMPT = """
+    You are a data quality agent for the TICKIT ticketing system.
+
+    TICKIT Business Background:
+    - Ticketing sales system with users, events, venues, sales entities
+    - Key business rules: 15% commission rate, ticket price $10-$500, standardized user names, event time accurate to hour
+    - Data quality KPIs: sales record completeness, price rationality, user info standardization, time data accuracy
+
+    Your task: Execute dbt MCP tools, analyze results, and provide precise code-level fix suggestions with exact file paths and line numbers.
+    """
+    
+    agent = Agent(
+        system_prompt=SYSTEM_PROMPT, 
+        tools=tools + [workflow, think],
+        model=bedrock_model
+    )
+    
+    print("Agent messages:", len(agent.messages))
+
+    # Step 1: Execute dbt MCP tools directly (not in workflow)
+    print("=== Executing dbt MCP Tools ===")
+    dbt_execution = agent("""
+    Please execute the following dbt MCP tools in sequence:
+    
+    1. Use 'build' tool to build the tickit_analytics project
+    2. Use 'test' tool to run all data quality tests  
+    3. Use 'list' tool to analyze model and test coverage
+    4. Use 'show' tool to examine failed test details
+    
+    Focus on identifying failed tests and provide specific file paths and line numbers for issues.
+    Report results in English.
+    """)
+    
+    print(f"dbt MCP Execution Results: {dbt_execution}")
+
+    # Step 2: Create workflow for analysis and dual reporting
+    print("\n=== Creating Analysis and Dual Reporting Workflow ===")
+    workflow_creation = agent.tool.workflow(
+        action="create",
+        workflow_id="tickit_dual_report_workflow",
+        tasks=[
+            {
+                "task_id": "deep_analysis",
+                "description": "Execute deep analysis using think tool",
+                "system_prompt": "Use think tool to analyze TICKIT data quality issues from business and technical perspectives. Provide precise code-level fixes in English.",
+                "priority": 4
+            },
+            {
+                "task_id": "english_report_generation",
+                "description": "Generate comprehensive English data quality report",
+                "dependencies": ["deep_analysis"],
+                "system_prompt": "Generate comprehensive English data quality report with exact code fixes, file paths, and line numbers based on dbt execution results and think analysis.",
+                "priority": 3
+            },
+            {
+                "task_id": "chinese_translation",
+                "description": "Translate English report to Chinese",
+                "dependencies": ["english_report_generation"],
+                "system_prompt": "Translate the English data quality report to Chinese, maintaining all technical details, file paths, and line numbers exactly as they are. Keep code snippets and technical terms in original form.",
+                "priority": 2
+            }
+        ]
+    )
+    print(f"Workflow Creation Result: {workflow_creation}")
+
+    # Step 3: Start the workflow
+    print("\n=== Starting Dual Report Workflow ===")
+    workflow_start = agent.tool.workflow(
+        action="start", 
+        workflow_id="tickit_dual_report_workflow"
+    )
+    print(f"Workflow Start Result: {workflow_start}")
+
+    # Step 4: Provide context to workflow
+    print("\n=== Providing Context to Workflow ===")
+    context_message = agent(f"""
+    Execute the dual reporting workflow with the following dbt execution context:
+    
+    dbt Results: {dbt_execution}
+    
+    Please complete all workflow tasks:
+    1. Deep analysis using think tool
+    2. English report generation with precise code fixes
+    3. Chinese translation maintaining technical accuracy
+    
+    Focus on providing exact file paths and line numbers for all code fixes.
+    Generate both English and Chinese versions.
+    """)
+    
+    print(f"Context Provided: {context_message}")
+
+    # Step 5: Check workflow status
+    print("\n=== Checking Workflow Status ===")
+    workflow_status = agent.tool.workflow(
+        action="status",
+        workflow_id="tickit_dual_report_workflow"
+    )
+    print(f"Workflow Status: {workflow_status}")
+
+    # Step 6: Get English report
+    print("\n=== Getting English Report ===")
+    english_report = agent("""
+    Please provide the English data quality report that was generated by the workflow.
+    This should include:
+    📊 Executive Summary
+    🔍 Detailed Problem Analysis  
+    🛠️ Precise Fix Recommendations (with exact file paths and line numbers)
+    💼 Business Value Assessment
+    📋 Prioritized Action Plan
+    """)
+
+    # Step 7: Get Chinese report
+    print("\n=== Getting Chinese Report ===")
+    chinese_report = agent("""
+    Please provide the Chinese data quality report that was translated by the workflow.
+    This should include:
+    📊 执行摘要
+    🔍 详细问题分析  
+    🛠️ 精确修复建议 (with exact file paths and line numbers)
+    💼 业务价值评估
+    📋 优先级行动计划
+    """)
+
+
+    # Output both reports
+    print(f"\n=== TICKIT Data Quality Report (English Version)  ===")
+    print(english_report)
+    
+    print(f"\n=== TICKIT数据质量检测报告 (中文版本)  ===")
+    print(chinese_report)
