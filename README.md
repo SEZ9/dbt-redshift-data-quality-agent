@@ -3,11 +3,13 @@ This project uses the Strands Agent framework combined with dbt MCP to build an 
 
 ## Setup Instructions
 
-1. Clone the Repository
+1. Clone the Repository and dbt MCP 
 ```
 bash
 git clone <your-repo-url>
 cd <your-project-directory>
+git clone https://github.com/dbt-labs/dbt-mcp.git
+
 ```
 2. Set Up Python Environment
 ```
